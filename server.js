@@ -32,6 +32,7 @@ function authorize(credentials, callback){
 		else {
 			oauth2Client.credentials = JSON.parse(token);
 			callback(oauth2Client);
+			insertFile(oauth2Client);
 		}
 	});
 }
@@ -76,7 +77,6 @@ function listFiles(auth) {
   var service = google.drive('v3');
   service.files.list({
     auth: auth,
-    pageSize: 10,
     fields: "nextPageToken, files(id, name)"
   }, function(err, response) {
     if (err) {
@@ -94,4 +94,47 @@ function listFiles(auth) {
       }
     }
   });
+}
+
+/*Insert files to appropriate drive*/
+function insertFile(auth) {
+	var drive = google.drive('v3');
+	var folderId = '1yYEZQv0sY_Xkk49yzvulczQo5BrN9oC4';
+	var fileMetadata = {
+	  'name': 'photonew.jpg',
+	  parents: [folderId]
+	};
+	var media = {
+	  mimeType: 'image/jpeg',
+	  body: fs.createReadStream('files/photo.jpg')
+	};
+	drive.files.create({
+	  auth:auth,
+	  resource: fileMetadata,
+	  media: media,
+	  fields: 'id'
+	}, function (err, file) {
+	  if (err) {
+		// Handle error
+		console.error("UPLOAD ERROR : " + err);
+	  } else {
+		console.log('UPLOADED -- File Id: ', file.id);
+	  }
+	});
+}
+
+function deleteFile(auth){
+	var drive = google.drive('v3');
+	var fileId = '1yYEZQv0sY_Xkk49yzvulczQo5BrN9oC4';
+	
+	var request = drive.files.trash({
+		'fileId': fileId
+	});
+	request.execute(function(resp) { });
+	
+	var request = drive.files.delete({
+    'fileId': fileId
+	});
+	request.execute(function(resp) { });
+
 }
